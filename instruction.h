@@ -10,12 +10,11 @@ namespace ozones {
 
     class Operand {
     public:
-        // Zero page addresses are converted to absolute during decoding
+        // Zero page and indirect absolute addresses are converted to absolute during decoding
         enum AddressingMode {
             kImmediate,
             kAbsolute,
             kImplied,
-            kIndirectAbsolute,
             kAbsoluteIndexedX,
             kAbsoluteIndexedY,
             kIndexedIndirect,
@@ -23,7 +22,7 @@ namespace ozones {
             kRelative,
             kAccumulator
         };
-        Operand(AddressingMode mode, uint16_t addr = 0);
+        Operand(AddressingMode mode = Operand::kImplied, uint16_t addr = 0);
         AddressingMode GetMode();
         uint16_t GetValue();
     private:
@@ -95,11 +94,11 @@ namespace ozones {
         };
         Instruction(std::shared_ptr<Ram> ram, uint16_t addr);
         size_t GetLength();
-        Operand GetOperand(size_t n);
+        Operand GetOperand();
         Mnemonic GetMnemonic();
     private:
         size_t length_;
-        std::vector<Operand> operands_;
+        Operand operand_;
         Mnemonic mnemonic_;
     };
 

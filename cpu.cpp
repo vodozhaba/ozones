@@ -16,31 +16,33 @@ namespace ozones {
 
     void Cpu::ExecuteInstruction(Instruction instruction) {
         switch(instruction.GetMnemonic()) {
+        case Instruction::kNop:
+            break;
         case Instruction::kOra:
-            reg_a_ |= OperandRead(instruction.GetOperand(0));
+            reg_a_ |= OperandRead(instruction.GetOperand());
             UpdateStatus(reg_a_);
             break;
         case Instruction::kAnd:
-            reg_a_ &= OperandRead(instruction.GetOperand(0));
+            reg_a_ &= OperandRead(instruction.GetOperand());
             UpdateStatus(reg_a_);
             break;
         case Instruction::kEor: // Seriously? You don't know the word XOR?
-            reg_a_ ^= OperandRead(instruction.GetOperand(0));
+            reg_a_ ^= OperandRead(instruction.GetOperand());
             UpdateStatus(reg_a_);
             break;
         case Instruction::kAdc: {
-            uint8_t operand = OperandRead(instruction.GetOperand(0));
+            uint8_t operand = OperandRead(instruction.GetOperand());
             Adc(operand);
             break;
         }
         case Instruction::kSta:
-            OperandWrite(instruction.GetOperand(0), reg_a_);
+            OperandWrite(instruction.GetOperand(), reg_a_);
             break;
         case Instruction::kLda:
-            reg_a_ = OperandRead(instruction.GetOperand(0));
+            reg_a_ = OperandRead(instruction.GetOperand());
             break;
         case Instruction::kCmp: {
-            uint8_t operand = OperandRead(instruction.GetOperand(0));
+            uint8_t operand = OperandRead(instruction.GetOperand());
             SetFlag(kNegative, reg_a_ < operand);
             SetFlag(kZero, reg_a_ == operand);
             SetFlag(kCarry, reg_a_ > operand);
@@ -48,7 +50,7 @@ namespace ozones {
         }
         case Instruction::kSbc: {
             // A + M = A + (-M)
-            uint8_t operand = OperandRead(instruction.GetOperand(0));
+            uint8_t operand = OperandRead(instruction.GetOperand());
             Adc(~operand);
             break;
         }
@@ -67,8 +69,6 @@ namespace ozones {
             return ram_->ReadByte(operand.GetValue());
         case Operand::kImplied:
             throw new std::runtime_error("Attempted to read an implied operand");
-        case Operand::kIndirectAbsolute:
-            return ram_->ReadWord(operand.GetValue());
         case Operand::kAbsoluteIndexedX:
             return ram_->ReadByte(operand.GetValue() + reg_x_);
         case Operand::kAbsoluteIndexedY:
@@ -98,8 +98,6 @@ namespace ozones {
             break;
         case Operand::kImplied:
             throw new std::runtime_error("Attempted to write to an implied operand");
-        case Operand::kIndirectAbsolute:
-            throw new std::runtime_error("Attempted to write to an indirect absolute operand");
         case Operand::kAbsoluteIndexedX:
             ram_->WriteByte(operand.GetValue() + reg_x_, value);
             break;
