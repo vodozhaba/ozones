@@ -81,6 +81,7 @@ namespace ozones {
             break;
         case 0x0A:
             mnemonic_ = kAsl;
+            operand_ = Operand(Operand::kAccumulator);
             length_ = 1;
             break;
         case 0x0C:
@@ -187,6 +188,7 @@ namespace ozones {
             break;
         case 0x2A:
             mnemonic_ = kRol;
+            operand_ = Operand(Operand::kAccumulator);
             length_ = 1;
             break;
         case 0x2C:
@@ -273,6 +275,7 @@ namespace ozones {
             break;
         case 0x4A:
             mnemonic_ = kLsr;
+            operand_ = Operand(Operand::kAccumulator);
             length_ = 1;
             break;
         case 0x4C:
@@ -359,6 +362,7 @@ namespace ozones {
             break;
         case 0x6A:
             mnemonic_ = kRor;
+            operand_ = Operand(Operand::kAccumulator);
             length_ = 1;
             break;
         case 0x6C:
@@ -484,7 +488,7 @@ namespace ozones {
             length_ = 2;
             break;
         case 0x98:
-            mnemonic_ = kSty;
+            mnemonic_ = kTya;
             length_ = 1;
             break;
         case 0x99:
