@@ -6,7 +6,7 @@
 
 namespace ozones {
 
-    Cpu::Cpu(std::shared_ptr<Ram> ram) : reg_a_(0), reg_x_(0), reg_y_(0), reg_sp_(0xFD), reg_pc_(0), reg_status_(0x34), ram_(ram) { }
+    Cpu::Cpu(std::shared_ptr<Ram> ram) : reg_a_(0), reg_x_(0), reg_y_(0), reg_sp_(0xFD), reg_sr_(0x34), reg_pc_(0), ram_(ram) { }
 
     void Cpu::Tick() {
         Instruction instr(ram_, reg_pc_);
@@ -17,6 +17,88 @@ namespace ozones {
     void Cpu::ExecuteInstruction(Instruction instruction) {
         switch(instruction.GetMnemonic()) {
         case Instruction::kNop:
+            break;
+        case Instruction::kPhp:
+            PushByte(reg_sr_);
+            break;
+        case Instruction::kBpl:
+            if(!(reg_sr_ & kNegative))
+                reg_pc_ = OperandRead(instruction.GetOperand());
+            break;
+        case Instruction::kClc:
+            SetFlag(kCarry, false);
+            break;
+        case Instruction::kJsr:
+            PushWord(reg_pc_ + 2);
+            reg_pc_ = OperandRead(instruction.GetOperand());
+            break;
+        case Instruction::kBit: {
+            uint8_t operand = OperandRead(instruction.GetOperand());
+            SetFlag(kNegative, operand & 0x80);
+            SetFlag(kOverflow, operand & 0x40);
+            SetFlag(kZero, (operand & reg_a_) == 0);
+            break;
+        }
+        case Instruction::kPlp:
+            reg_sr_ = PullWord();
+            break;
+        case Instruction::kBmi: {
+            if(reg_sr_ & kNegative)
+                reg_pc_ = OperandRead(instruction.GetOperand());
+            break;
+        }
+        case Instruction::kSec:
+            SetFlag(kCarry, true);
+            break;
+        case Instruction::kRti:
+            reg_sr_ = PullByte();
+            reg_pc_ = PullWord();
+            break;
+        case Instruction::kPha:
+            PushByte(reg_a_);
+            break;
+        case Instruction::kJmp:
+            reg_pc_ = OperandRead(instruction.GetOperand());
+            break;
+        case Instruction::kBvc:
+            if(!(reg_sr_ & kOverflow))
+                reg_pc_ = OperandRead(instruction.GetOperand());
+            break;
+        case Instruction::kCli:
+            SetFlag(kInterruptDisable, false);
+            break;
+        case Instruction::kRts:
+            reg_pc_ = PullWord() + 1;
+            break;
+        case Instruction::kPla:
+            reg_a_ = PullByte();
+            UpdateStatus(reg_a_);
+            break;
+        case Instruction::kBvs:
+            if(reg_sr_ & kOverflow)
+                reg_pc_ = OperandRead(instruction.GetOperand());
+            break;
+        case Instruction::kSei:
+            SetFlag(kInterruptDisable, true);
+            break;
+        case Instruction::kSty:
+            OperandWrite(instruction.GetOperand(), reg_y_);
+            break;
+        case Instruction::kDey:
+            --reg_y_;
+            UpdateStatus(reg_y_);
+            break;
+        case Instruction::kBcc:
+            if(!(reg_sr_ & kCarry))
+                reg_pc_ = OperandRead(instruction.GetOperand());
+            break;
+        case Instruction::kTya:
+            reg_a_ = reg_y_;
+            UpdateStatus(reg_a_);
+            break;
+        case Instruction::kLdy:
+            reg_y_ = OperandRead(instruction.GetOperand());
+            UpdateStatus(reg_y_);
             break;
         case Instruction::kOra:
             reg_a_ |= OperandRead(instruction.GetOperand());
@@ -138,7 +220,7 @@ namespace ozones {
     void Cpu::Adc(uint8_t operand) {
         uint8_t old_a = reg_a_;
         reg_a_ += operand;
-        if(reg_status_ | kCarry)
+        if(reg_sr_ | kCarry)
             ++reg_a_;
         UpdateStatus(reg_a_);
         SetFlag(kCarry, old_a < reg_a_);
@@ -146,5 +228,22 @@ namespace ozones {
         SetFlag(kOverflow, ((old_a & 0x80) == (operand & 0x80)) && ((old_a & 0x80) != (reg_a_ & 0x80)));
     }
 
+    void Cpu::PushByte(uint8_t value) {
+        ram_->WriteByte(reg_sp_--, value);
+    }
+
+    void Cpu::PushWord(uint16_t value) {
+        ram_->WriteByte(reg_sp_, value);
+        reg_sp_ -= 2;
+    }
+
+    uint8_t Cpu::PullByte() {
+        return ram_->ReadByte(++reg_sp_);
+    }
+
+    uint16_t Cpu::PullWord() {
+        reg_sp_ += 2;
+        return ram_->ReadWord(reg_sp_);
+    }
 
 }
