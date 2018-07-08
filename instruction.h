@@ -84,6 +84,7 @@ namespace ozones {
             kStx,
             kTxa,
             kTxs,
+            kShy,
             kShx,
             kLdx,
             kTax,
