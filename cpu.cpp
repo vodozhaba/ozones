@@ -29,7 +29,7 @@ namespace ozones {
             SetFlag(kCarry, false);
             break;
         case Instruction::kJsr:
-            PushWord(reg_pc_ + 2);
+            PushWord(reg_pc_ - 1);
             reg_pc_ = OperandRead(instruction.GetOperand());
             break;
         case Instruction::kBit: {
