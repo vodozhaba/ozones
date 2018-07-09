@@ -11,6 +11,8 @@ namespace ozones {
     public:
         Cpu(std::shared_ptr<Ram> ram);
         void Tick();
+        void SetNmiPending(bool nmi_pending);
+        void SetIrqPending(bool irq_pending);
     private:
         enum StatusFlag {
             kCarry              = 0x01,
@@ -22,10 +24,12 @@ namespace ozones {
             kOverflow           = 0x40,
             kNegative           = 0x80
         };
-        uint8_t reg_a_, reg_x_, reg_y_, reg_sp_, reg_sr_;
+        uint8_t reg_a_, reg_x_, reg_y_, reg_sp_, reg_p_;
         uint16_t reg_pc_;
         int cycle_counter_;
         std::shared_ptr<Ram> ram_;
+        bool nmi_pending_;
+        bool irq_pending_;
         void ExecuteInstruction(Instruction instruction);
         uint16_t OperandRead(Operand operand);
         void OperandWrite(Operand operand, uint8_t value);
@@ -37,5 +41,7 @@ namespace ozones {
         uint8_t PullByte();
         uint16_t PullWord();
         void TakeCycles(int n);
+        void TriggerNmi();
+        void TriggerIrq();
     };
 }

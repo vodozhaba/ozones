@@ -6,24 +6,41 @@
 
 namespace ozones {
 
-    Cpu::Cpu(std::shared_ptr<Ram> ram) : reg_a_(0), reg_x_(0), reg_y_(0), reg_sp_(0xFD), reg_sr_(0x34), reg_pc_(0), cycle_counter_(0), ram_(ram) { }
+    Cpu::Cpu(std::shared_ptr<Ram> ram) : reg_a_(0), reg_x_(0), reg_y_(0), reg_sp_(0xFD), reg_p_(0x34), reg_pc_(ram->ReadWord(0xFFFC)), cycle_counter_(0), ram_(ram), nmi_pending_(false) { }
 
     void Cpu::Tick() {
         Instruction instr(ram_, reg_pc_);
         TakeCycles(instr.GetCycles());
         reg_pc_ += instr.GetLength();
         ExecuteInstruction(instr);
+        if(nmi_pending_)
+            TriggerNmi();
+        if(!(reg_p_ & kInterruptDisable) && irq_pending_)
+            TriggerIrq();
+    }
+
+    void Cpu::SetNmiPending(bool nmi_pending) {
+        nmi_pending_ = nmi_pending;
+    }
+
+    void Cpu::SetIrqPending(bool irq_pending) {
+        irq_pending_ = irq_pending;
     }
 
     void Cpu::ExecuteInstruction(Instruction instruction) {
         switch(instruction.GetMnemonic()) {
         case Instruction::kNop:
             break;
+        case Instruction::kBrk:
+            PushWord(reg_pc_);
+            PushByte(reg_p_ | kBrkOrPhp);
+            reg_pc_ = ram_->ReadWord(0xFFFE);
+            break;
         case Instruction::kPhp:
-            PushByte(reg_sr_);
+            PushByte(reg_p_ | kBrkOrPhp);
             break;
         case Instruction::kBpl:
-            if(!(reg_sr_ & kNegative)) {
+            if(!(reg_p_ & kNegative)) {
                 TakeCycles(1);
                 reg_pc_ = OperandRead(instruction.GetOperand());
             }
@@ -43,10 +60,12 @@ namespace ozones {
             break;
         }
         case Instruction::kPlp:
-            reg_sr_ = PullWord();
+            reg_p_ = PullWord();
+            SetFlag(kAlwaysSet, true);
+            SetFlag(kBrkOrPhp, false);
             break;
         case Instruction::kBmi: {
-            if(reg_sr_ & kNegative) {
+            if(reg_p_ & kNegative) {
                 TakeCycles(1);
                 reg_pc_ = OperandRead(instruction.GetOperand());
             }
@@ -56,8 +75,10 @@ namespace ozones {
             SetFlag(kCarry, true);
             break;
         case Instruction::kRti:
-            reg_sr_ = PullByte();
+            reg_p_ = PullByte();
             reg_pc_ = PullWord();
+            SetFlag(kAlwaysSet, true);
+            SetFlag(kBrkOrPhp, false);
             break;
         case Instruction::kPha:
             PushByte(reg_a_);
@@ -66,7 +87,7 @@ namespace ozones {
             reg_pc_ = OperandRead(instruction.GetOperand());
             break;
         case Instruction::kBvc:
-            if(!(reg_sr_ & kOverflow)) {
+            if(!(reg_p_ & kOverflow)) {
                 TakeCycles(1);
                 reg_pc_ = OperandRead(instruction.GetOperand());
             }
@@ -82,7 +103,7 @@ namespace ozones {
             UpdateStatus(reg_a_);
             break;
         case Instruction::kBvs:
-            if(reg_sr_ & kOverflow) {
+            if(reg_p_ & kOverflow) {
                 TakeCycles(1);
                 reg_pc_ = OperandRead(instruction.GetOperand());
             }
@@ -97,7 +118,7 @@ namespace ozones {
             UpdateStatus(--reg_y_);
             break;
         case Instruction::kBcc:
-            if(!(reg_sr_ & kCarry)) {
+            if(!(reg_p_ & kCarry)) {
                 TakeCycles(1);
                 reg_pc_ = OperandRead(instruction.GetOperand());
             }
@@ -115,7 +136,7 @@ namespace ozones {
             UpdateStatus(reg_y_);
             break;
         case Instruction::kBcs:
-            if(reg_sr_ & kCarry) {
+            if(reg_p_ & kCarry) {
                 TakeCycles(1);
                 reg_pc_ = OperandRead(instruction.GetOperand());
             }
@@ -134,7 +155,7 @@ namespace ozones {
             UpdateStatus(++reg_y_);
             break;
         case Instruction::kBne:
-            if(!(reg_sr_ & kZero)) {
+            if(!(reg_p_ & kZero)) {
                 TakeCycles(1);
                 reg_pc_ = OperandRead(instruction.GetOperand());
             }
@@ -153,7 +174,7 @@ namespace ozones {
             UpdateStatus(++reg_x_);
             break;
         case Instruction::kBeq:
-            if(reg_sr_ & kZero) {
+            if(reg_p_ & kZero) {
                 TakeCycles(1);
                 reg_pc_ = OperandRead(instruction.GetOperand());
             }
@@ -207,7 +228,7 @@ namespace ozones {
         }
         case Instruction::kRol: {
             uint8_t operand = OperandRead(instruction.GetOperand());
-            uint8_t old_carry = (reg_sr_ & kCarry) ? 1 : 0;
+            uint8_t old_carry = (reg_p_ & kCarry) ? 1 : 0;
             SetFlag(kCarry, operand & 0x80);
             operand <<= 1;
             operand += old_carry;
@@ -225,7 +246,7 @@ namespace ozones {
         }
         case Instruction::kRor: {
             uint8_t operand = OperandRead(instruction.GetOperand());
-            uint8_t old_carry = (reg_sr_ & kCarry) ? 0x80 : 0;
+            uint8_t old_carry = (reg_p_ & kCarry) ? 0x80 : 0;
             SetFlag(kCarry, operand & 0x01);
             operand >>= 1;
             operand += old_carry;
@@ -374,15 +395,15 @@ namespace ozones {
 
     void Cpu::SetFlag(StatusFlag flag, bool value) {
         if(value)
-            reg_sp_ |= flag;
+            reg_p_ |= flag;
         else
-            reg_sp_ &= ~flag;
+            reg_p_ &= ~flag;
     }
 
     void Cpu::Adc(uint8_t operand) {
         uint8_t old_a = reg_a_;
         reg_a_ += operand;
-        if(reg_sr_ & kCarry)
+        if(reg_p_ & kCarry)
             ++reg_a_;
         UpdateStatus(reg_a_);
         SetFlag(kCarry, old_a < reg_a_);
@@ -395,8 +416,8 @@ namespace ozones {
     }
 
     void Cpu::PushWord(uint16_t value) {
-        ram_->WriteByte(reg_sp_, value);
-        reg_sp_ -= 2;
+        --reg_sp_;
+        ram_->WriteWord(reg_sp_--, value);
     }
 
     uint8_t Cpu::PullByte() {
@@ -404,12 +425,26 @@ namespace ozones {
     }
 
     uint16_t Cpu::PullWord() {
-        reg_sp_ += 2;
-        return ram_->ReadWord(reg_sp_);
+        ++reg_sp_;
+        return ram_->ReadWord(reg_sp_++);
     }
 
     void Cpu::TakeCycles(int n) {
         cycle_counter_ += n;
+    }
+
+    void Cpu::TriggerNmi() {
+        PushWord(reg_pc_);
+        PushByte(reg_p_);
+        reg_pc_ = ram_->ReadWord(0xFFFA);
+        nmi_pending_ = false;
+    }
+
+    void Cpu::TriggerIrq() {
+        PushWord(reg_pc_);
+        PushByte(reg_p_);
+        SetFlag(kInterruptDisable, true);
+        reg_pc_ = ram_->ReadWord(0xFFFE);
     }
 
 }
