@@ -85,8 +85,7 @@ namespace ozones {
             OperandWrite(instruction.GetOperand(), reg_y_);
             break;
         case Instruction::kDey:
-            --reg_y_;
-            UpdateStatus(reg_y_);
+            UpdateStatus(--reg_y_);
             break;
         case Instruction::kBcc:
             if(!(reg_sr_ & kCarry))
@@ -100,6 +99,51 @@ namespace ozones {
             reg_y_ = OperandRead(instruction.GetOperand());
             UpdateStatus(reg_y_);
             break;
+        case Instruction::kTay:
+            reg_y_ = reg_a_;
+            UpdateStatus(reg_y_);
+            break;
+        case Instruction::kBcs:
+            if(reg_sr_ & kCarry)
+                reg_pc_ = OperandRead(instruction.GetOperand());
+            break;
+        case Instruction::kClv:
+            SetFlag(kOverflow, false);
+            break;
+        case Instruction::kCpy: {
+            uint8_t operand = OperandRead(instruction.GetOperand());
+            SetFlag(kNegative, reg_y_ < operand);
+            SetFlag(kZero, reg_y_ == operand);
+            SetFlag(kCarry, reg_y_  > operand);
+            break;
+        }
+        case Instruction::kIny:
+            UpdateStatus(++reg_y_);
+            break;
+        case Instruction::kBne:
+            if(!(reg_sr_ & kZero))
+                reg_pc_ = OperandRead(instruction.GetOperand());
+            break;
+        case Instruction::kCld:
+            SetFlag(kDecimalMode, true);
+            break;
+        case Instruction::kCpx: {
+            uint8_t operand = OperandRead(instruction.GetOperand());
+            SetFlag(kNegative, reg_x_ < operand);
+            SetFlag(kZero, reg_x_ == operand);
+            SetFlag(kCarry, reg_x_  > operand);
+            break;
+        }
+        case Instruction::kInx:
+            UpdateStatus(++reg_x_);
+            break;
+        case Instruction::kBeq:
+            if(reg_sr_ & kZero)
+                reg_pc_ = OperandRead(instruction.GetOperand());
+            break;
+        case Instruction::kSed:
+            SetFlag(kDecimalMode, true);
+            throw new std::runtime_error("Decimal mode is currently not supported");
         case Instruction::kOra:
             reg_a_ |= OperandRead(instruction.GetOperand());
             UpdateStatus(reg_a_);
@@ -135,6 +179,80 @@ namespace ozones {
             uint8_t operand = OperandRead(instruction.GetOperand());
             Adc(~operand);
             break;
+        }
+        case Instruction::kAsl: {
+            uint8_t operand = OperandRead(instruction.GetOperand());
+            SetFlag(kCarry, operand & 0x80);
+            operand <<= 1;
+            OperandWrite(instruction.GetOperand(), operand);
+            UpdateStatus(operand);
+            break;
+        }
+        case Instruction::kRol: {
+            uint8_t operand = OperandRead(instruction.GetOperand());
+            uint8_t old_carry = (reg_sr_ & kCarry) ? 1 : 0;
+            SetFlag(kCarry, operand & 0x80);
+            operand <<= 1;
+            operand += old_carry;
+            OperandWrite(instruction.GetOperand(), operand);
+            UpdateStatus(operand);
+            break;
+        }
+        case Instruction::kLsr: {
+            uint8_t operand = OperandRead(instruction.GetOperand());
+            SetFlag(kCarry, operand & 0x01);
+            operand >>= 1;
+            OperandWrite(instruction.GetOperand(), operand);
+            UpdateStatus(operand);
+            break;
+        }
+        case Instruction::kRor: {
+            uint8_t operand = OperandRead(instruction.GetOperand());
+            uint8_t old_carry = (reg_sr_ & kCarry) ? 0x80 : 0;
+            SetFlag(kCarry, operand & 0x01);
+            operand >>= 1;
+            operand += old_carry;
+            OperandWrite(instruction.GetOperand(), operand);
+            UpdateStatus(operand);
+            break;
+        }
+        case Instruction::kStx:
+            OperandWrite(instruction.GetOperand(), reg_x_);
+            break;
+        case Instruction::kTxa:
+            reg_a_ = reg_x_;
+            UpdateStatus(reg_a_);
+            break;
+        case Instruction::kTxs:
+            reg_sp_ = reg_x_;
+            break;
+        case Instruction::kLdx:
+            reg_x_ = OperandRead(instruction.GetOperand());
+            UpdateStatus(reg_x_);
+            break;
+        case Instruction::kTax:
+            reg_x_ = reg_a_;
+            UpdateStatus(reg_x_);
+            break;
+        case Instruction::kTsx:
+            reg_x_ = reg_sp_;
+            UpdateStatus(reg_x_);
+            break;
+        case Instruction::kDec: {
+            uint8_t operand = OperandRead(instruction.GetOperand());
+            UpdateStatus(--operand);
+            OperandWrite(instruction.GetOperand(), operand);
+            break;
+        }
+        case Instruction::kDex: {
+            UpdateStatus(--reg_x_);
+            break;
+        case Instruction::kInc: {
+                uint8_t operand = OperandRead(instruction.GetOperand());
+                UpdateStatus(++operand);
+                OperandWrite(instruction.GetOperand(), operand);
+                break;
+            }
         }
         default:
             std::stringstream ss;

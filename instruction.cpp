@@ -500,19 +500,9 @@ namespace ozones {
             mnemonic_ = kTxs;
             length_ = 1;
             break;
-        case 0x9C:
-            mnemonic_ = kShy;
-            operand_ = Operand(Operand::kAbsoluteIndexedX, ram->ReadWord(addr));
-            length_ = 3;
-            break;
         case 0x9D:
             mnemonic_ = kSta;
             operand_ = Operand(Operand::kAbsoluteIndexedX, ram->ReadWord(addr));
-            length_ = 3;
-            break;
-        case 0x9E:
-            mnemonic_ = kShx;
-            operand_ = Operand(Operand::kAbsoluteIndexedY, ram->ReadWord(addr));
             length_ = 3;
             break;
         case 0xA0:
