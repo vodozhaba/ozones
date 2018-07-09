@@ -17,6 +17,8 @@ namespace ozones {
             kImplied,
             kAbsoluteIndexedX,
             kAbsoluteIndexedY,
+            kZeroPageIndexedX,
+            kZeroPageIndexedY,
             kIndexedIndirect,
             kIndirectIndexed,
             kRelative,

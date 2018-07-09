@@ -273,6 +273,10 @@ namespace ozones {
             return ram_->ReadByte(operand.GetValue() + reg_x_);
         case Operand::kAbsoluteIndexedY:
             return ram_->ReadByte(operand.GetValue() + reg_y_);
+        case Operand::kZeroPageIndexedX:
+            return ram_->ReadByte((operand.GetValue() + reg_x_) & 0xFF);
+        case Operand::kZeroPageIndexedY:
+            return ram_->ReadByte((operand.GetValue() + reg_y_) & 0xFF);
         // Spot the difference
         case Operand::kIndexedIndirect:
             return ram_->ReadByte(ram_->ReadWord(operand.GetValue() + reg_x_));
@@ -303,6 +307,12 @@ namespace ozones {
             break;
         case Operand::kAbsoluteIndexedY:
             ram_->WriteByte(operand.GetValue() + reg_y_, value);
+            break;
+        case Operand::kZeroPageIndexedX:
+            ram_->WriteByte((operand.GetValue() + reg_x_) & 0xFF, value);
+            break;
+        case Operand::kZeroPageIndexedY:
+            ram_->WriteByte((operand.GetValue() + reg_y_) & 0xFF, value);
             break;
         // Spot the difference
         case Operand::kIndexedIndirect:
