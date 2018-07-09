@@ -6,10 +6,11 @@
 
 namespace ozones {
 
-    Cpu::Cpu(std::shared_ptr<Ram> ram) : reg_a_(0), reg_x_(0), reg_y_(0), reg_sp_(0xFD), reg_sr_(0x34), reg_pc_(0), ram_(ram) { }
+    Cpu::Cpu(std::shared_ptr<Ram> ram) : reg_a_(0), reg_x_(0), reg_y_(0), reg_sp_(0xFD), reg_sr_(0x34), reg_pc_(0), cycle_counter_(0), ram_(ram) { }
 
     void Cpu::Tick() {
         Instruction instr(ram_, reg_pc_);
+        TakeCycles(instr.GetCycles());
         reg_pc_ += instr.GetLength();
         ExecuteInstruction(instr);
     }
@@ -22,8 +23,10 @@ namespace ozones {
             PushByte(reg_sr_);
             break;
         case Instruction::kBpl:
-            if(!(reg_sr_ & kNegative))
+            if(!(reg_sr_ & kNegative)) {
+                TakeCycles(1);
                 reg_pc_ = OperandRead(instruction.GetOperand());
+            }
             break;
         case Instruction::kClc:
             SetFlag(kCarry, false);
@@ -43,8 +46,10 @@ namespace ozones {
             reg_sr_ = PullWord();
             break;
         case Instruction::kBmi: {
-            if(reg_sr_ & kNegative)
+            if(reg_sr_ & kNegative) {
+                TakeCycles(1);
                 reg_pc_ = OperandRead(instruction.GetOperand());
+            }
             break;
         }
         case Instruction::kSec:
@@ -61,8 +66,10 @@ namespace ozones {
             reg_pc_ = OperandRead(instruction.GetOperand());
             break;
         case Instruction::kBvc:
-            if(!(reg_sr_ & kOverflow))
+            if(!(reg_sr_ & kOverflow)) {
+                TakeCycles(1);
                 reg_pc_ = OperandRead(instruction.GetOperand());
+            }
             break;
         case Instruction::kCli:
             SetFlag(kInterruptDisable, false);
@@ -75,8 +82,10 @@ namespace ozones {
             UpdateStatus(reg_a_);
             break;
         case Instruction::kBvs:
-            if(reg_sr_ & kOverflow)
+            if(reg_sr_ & kOverflow) {
+                TakeCycles(1);
                 reg_pc_ = OperandRead(instruction.GetOperand());
+            }
             break;
         case Instruction::kSei:
             SetFlag(kInterruptDisable, true);
@@ -88,8 +97,10 @@ namespace ozones {
             UpdateStatus(--reg_y_);
             break;
         case Instruction::kBcc:
-            if(!(reg_sr_ & kCarry))
+            if(!(reg_sr_ & kCarry)) {
+                TakeCycles(1);
                 reg_pc_ = OperandRead(instruction.GetOperand());
+            }
             break;
         case Instruction::kTya:
             reg_a_ = reg_y_;
@@ -104,8 +115,10 @@ namespace ozones {
             UpdateStatus(reg_y_);
             break;
         case Instruction::kBcs:
-            if(reg_sr_ & kCarry)
+            if(reg_sr_ & kCarry) {
+                TakeCycles(1);
                 reg_pc_ = OperandRead(instruction.GetOperand());
+            }
             break;
         case Instruction::kClv:
             SetFlag(kOverflow, false);
@@ -121,8 +134,10 @@ namespace ozones {
             UpdateStatus(++reg_y_);
             break;
         case Instruction::kBne:
-            if(!(reg_sr_ & kZero))
+            if(!(reg_sr_ & kZero)) {
+                TakeCycles(1);
                 reg_pc_ = OperandRead(instruction.GetOperand());
+            }
             break;
         case Instruction::kCld:
             SetFlag(kDecimalMode, true);
@@ -138,8 +153,10 @@ namespace ozones {
             UpdateStatus(++reg_x_);
             break;
         case Instruction::kBeq:
-            if(reg_sr_ & kZero)
+            if(reg_sr_ & kZero) {
+                TakeCycles(1);
                 reg_pc_ = OperandRead(instruction.GetOperand());
+            }
             break;
         case Instruction::kSed:
             SetFlag(kDecimalMode, true);
@@ -270,8 +287,14 @@ namespace ozones {
         case Operand::kImplied:
             throw new std::runtime_error("Attempted to read an implied operand");
         case Operand::kAbsoluteIndexedX:
+            if((operand.GetValue() & 0xFF) + reg_x_ > 0xFF && operand.HasPageBoundaryPenalty()) {
+                TakeCycles(1);
+            }
             return ram_->ReadByte(operand.GetValue() + reg_x_);
         case Operand::kAbsoluteIndexedY:
+            if((operand.GetValue() & 0xFF) + reg_y_ > 0xFF && operand.HasPageBoundaryPenalty()) {
+                TakeCycles(1);
+            }
             return ram_->ReadByte(operand.GetValue() + reg_y_);
         case Operand::kZeroPageIndexedX:
             return ram_->ReadByte((operand.GetValue() + reg_x_) & 0xFF);
@@ -282,8 +305,13 @@ namespace ozones {
             return ram_->ReadByte(ram_->ReadWord(operand.GetValue() + reg_x_));
         case Operand::kIndirectIndexed:
             return ram_->ReadByte(ram_->ReadWord(operand.GetValue()) + reg_y_);
-        case Operand::kRelative:
-            return reg_pc_ + (int8_t) operand.GetValue();
+        case Operand::kRelative: {
+            uint16_t new_reg_pc = reg_pc_ + (int8_t) operand.GetValue();
+            if(new_reg_pc & 0xFF00 != reg_pc_ & 0xFF00) {
+                TakeCycles(1);
+            }
+            return new_reg_pc;
+        }
         case Operand::kAccumulator:
             return reg_a_;
         default:
@@ -303,9 +331,15 @@ namespace ozones {
         case Operand::kImplied:
             throw new std::runtime_error("Attempted to write to an implied operand");
         case Operand::kAbsoluteIndexedX:
+            if((operand.GetValue() & 0xFF) + reg_x_ > 0xFF && operand.HasPageBoundaryPenalty()) {
+                TakeCycles(1);
+            }
             ram_->WriteByte(operand.GetValue() + reg_x_, value);
             break;
         case Operand::kAbsoluteIndexedY:
+            if((operand.GetValue() & 0xFF) + reg_y_ > 0xFF && operand.HasPageBoundaryPenalty()) {
+                TakeCycles(1);
+            }
             ram_->WriteByte(operand.GetValue() + reg_y_, value);
             break;
         case Operand::kZeroPageIndexedX:
@@ -348,7 +382,7 @@ namespace ozones {
     void Cpu::Adc(uint8_t operand) {
         uint8_t old_a = reg_a_;
         reg_a_ += operand;
-        if(reg_sr_ | kCarry)
+        if(reg_sr_ & kCarry)
             ++reg_a_;
         UpdateStatus(reg_a_);
         SetFlag(kCarry, old_a < reg_a_);
@@ -372,6 +406,10 @@ namespace ozones {
     uint16_t Cpu::PullWord() {
         reg_sp_ += 2;
         return ram_->ReadWord(reg_sp_);
+    }
+
+    void Cpu::TakeCycles(int n) {
+        cycle_counter_ += n;
     }
 
 }

@@ -24,18 +24,19 @@ namespace ozones {
             kRelative,
             kAccumulator
         };
-        Operand(AddressingMode mode = Operand::kImplied, uint16_t addr = 0);
+        Operand(AddressingMode mode = Operand::kImplied, uint16_t addr = 0, bool page_boundary_penalty = false);
         AddressingMode GetMode();
+        bool HasPageBoundaryPenalty();
         uint16_t GetValue();
     private:
         AddressingMode mode_;
+        bool page_boundary_penalty_;
         uint16_t value_;
     };
 
     class Instruction {
     public:
         enum Mnemonic {
-            kStp,
             kNop,
             kBrk,
             kPhp,
@@ -94,10 +95,12 @@ namespace ozones {
             kInc
         };
         Instruction(std::shared_ptr<Ram> ram, uint16_t addr);
+        int GetCycles();
         size_t GetLength();
         Operand GetOperand();
         Mnemonic GetMnemonic();
     private:
+        int cycles_;
         size_t length_;
         Operand operand_;
         Mnemonic mnemonic_;
