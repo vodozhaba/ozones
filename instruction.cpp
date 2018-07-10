@@ -217,7 +217,7 @@ namespace ozones {
         case 0x3E:
             mnemonic_ = kRol;
             operand_ = Operand(Operand::kAbsoluteIndexedX, ram->ReadWord(addr));
-            length_ = 2;
+            length_ = 3;
             cycles_ = 7;
             break;
         case 0x40:
@@ -834,7 +834,7 @@ namespace ozones {
             cycles_ = 4;
             break;
         case 0xFD:
-            mnemonic_ = kCmp;
+            mnemonic_ = kSbc;
             operand_ = Operand(Operand::kAbsoluteIndexedX, ram->ReadWord(addr), true);
             length_ = 3;
             cycles_ = 4;
