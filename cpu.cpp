@@ -37,6 +37,8 @@ namespace ozones {
     void Cpu::ExecuteInstruction(Instruction instruction) {
         switch(instruction.GetMnemonic()) {
         case Instruction::kNop:
+            if(instruction.GetOperand().GetMode() != Operand::kImplied)
+                OperandRead(instruction.GetOperand());
             break;
         case Instruction::kBrk:
             PushWord(reg_pc_);

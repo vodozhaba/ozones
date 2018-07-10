@@ -852,6 +852,50 @@ namespace ozones {
             mnemonic_ = kNop;
             length_ = 2;
             cycles_ = 3;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadByte(addr));
+            break;
+        case 0x0C:
+            mnemonic_ = kNop;
+            length_ = 3;
+            cycles_ = 4;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadWord(addr));
+            break;
+        case 0x14:
+        case 0x34:
+        case 0x54:
+        case 0x74:
+        case 0xD4:
+        case 0xF4:
+            mnemonic_ = kNop;
+            length_ = 2;
+            cycles_ = 4;
+            // NOP with zero page indexed addressing. What am I doing...
+            operand_ = Operand(Operand::kZeroPageIndexedX, ram->ReadByte(addr));
+            break;
+        case 0x1A:
+        case 0x3A:
+        case 0x5A:
+        case 0x7A:
+        case 0xDA:
+        case 0xFA:
+            mnemonic_ = kNop;
+            break;
+        case 0x80:
+            mnemonic_ = kNop;
+            length_ = 2;
+            operand_ = Operand(Operand::kImmediate, ram->ReadByte(addr));
+            break;
+        case 0x1C:
+        case 0x3C:
+        case 0x5C:
+        case 0x7C:
+        case 0xDC:
+        case 0xFC:
+            mnemonic_ = kNop;
+            length_ = 3;
+            cycles_ = 4;
+            // SERIOUSLY?!
+            operand_ = Operand(Operand::kAbsoluteIndexedX, ram->ReadWord(addr), true);
             break;
         default:
             std::stringstream ss;
