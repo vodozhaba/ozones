@@ -335,8 +335,14 @@ namespace ozones {
             uint16_t msb = ram_->ReadByte((operand.GetValue() + reg_x_ + 1) & 0xFF);
             return ram_->ReadByte(lsb | (msb << 8));
         }
-        case Operand::kIndirectIndexed:
-            return ram_->ReadByte(ram_->ReadWord(operand.GetValue()) + reg_y_);
+        case Operand::kIndirectIndexed: {
+            uint16_t lsb = ram_->ReadByte(operand.GetValue() & 0xFF);
+            uint16_t msb = ram_->ReadByte((operand.GetValue() + 1) & 0xFF);
+            uint16_t addr = (lsb | (msb << 8)) + reg_y_;
+            if((addr & 0xFF00) != (msb << 8) && operand.HasPageBoundaryPenalty())
+                TakeCycles(1);
+            return ram_->ReadByte(addr);
+        }
         case Operand::kRelative: {
             uint16_t new_reg_pc = reg_pc_ + (int8_t) operand.GetValue();
             if((new_reg_pc & 0xFF00) != reg_pc_ & 0xFF00 && operand.HasPageBoundaryPenalty()) {
@@ -387,9 +393,15 @@ namespace ozones {
             ram_->WriteByte(lsb | (msb << 8), value);
             break;
         }
-        case Operand::kIndirectIndexed:
-            ram_->WriteByte(ram_->ReadWord(operand.GetValue()) + reg_y_, value);
+        case Operand::kIndirectIndexed: {
+            uint16_t lsb = ram_->ReadByte(operand.GetValue()) & 0xFF;
+            uint16_t msb = ram_->ReadByte(operand.GetValue() + 1) & 0xFF;
+            uint16_t addr = (lsb | (msb << 8)) + reg_y_;
+            if((addr & 0xFF00) != (msb << 8) && operand.HasPageBoundaryPenalty())
+                TakeCycles(1);
+            ram_->WriteByte(addr, value);
             break;
+        }
         case Operand::kRelative:
             throw new std::runtime_error("Attempted to write to a relative operand");
         case Operand::kAccumulator:

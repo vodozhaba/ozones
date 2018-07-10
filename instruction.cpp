@@ -78,7 +78,7 @@ namespace ozones {
             break;
         case 0x11:
             mnemonic_ = kOra;
-            operand_ = Operand(Operand::kIndirectIndexed, true, ram->ReadByte(addr));
+            operand_ = Operand(Operand::kIndirectIndexed, ram->ReadByte(addr), true);
             length_ = 2;
             cycles_ = 5;
             break;
@@ -183,7 +183,7 @@ namespace ozones {
             break;
         case 0x31:
             mnemonic_ = kAnd;
-            operand_ = Operand(Operand::kIndirectIndexed, true, ram->ReadByte(addr));
+            operand_ = Operand(Operand::kIndirectIndexed, ram->ReadByte(addr), true);
             length_ = 2;
             cycles_ = 5;
             break;
@@ -280,7 +280,7 @@ namespace ozones {
             break;
         case 0x51:
             mnemonic_ = kEor;
-            operand_ = Operand(Operand::kIndirectIndexed, true, ram->ReadByte(addr));
+            operand_ = Operand(Operand::kIndirectIndexed, ram->ReadByte(addr), true);
             length_ = 2;
             cycles_ = 5;
             break;
@@ -291,7 +291,7 @@ namespace ozones {
             cycles_ = 4;
             break;
         case 0x56:
-            mnemonic_ = kRor;
+            mnemonic_ = kLsr;
             operand_ = Operand(Operand::kZeroPageIndexedX, ram->ReadByte(addr));
             length_ = 2;
             cycles_ = 6;
@@ -335,7 +335,7 @@ namespace ozones {
             break;
         case 0x66:
             mnemonic_ = kRor;
-            operand_ = Operand(Operand::kAbsolute, addr);
+            operand_ = Operand(Operand::kAbsolute, ram->ReadByte(addr));
             length_ = 2;
             cycles_ = 5;
             break;
@@ -387,7 +387,7 @@ namespace ozones {
             break;
         case 0x71:
             mnemonic_ = kAdc;
-            operand_ = Operand(Operand::kIndirectIndexed, true, ram->ReadByte(addr));
+            operand_ = Operand(Operand::kIndirectIndexed, ram->ReadByte(addr), true);
             length_ = 2;
             cycles_ = 5;
             break;
@@ -548,7 +548,7 @@ namespace ozones {
             cycles_ = 3;
             break;
         case 0xA6:
-            mnemonic_ = kLdy;
+            mnemonic_ = kLdx;
             operand_ = Operand(Operand::kAbsolute, ram->ReadByte(addr));
             length_ = 2;
             cycles_ = 3;
@@ -589,7 +589,7 @@ namespace ozones {
             break;
         case 0xB1:
             mnemonic_ = kLda;
-            operand_ = Operand(Operand::kIndirectIndexed, true, ram->ReadByte(addr));
+            operand_ = Operand(Operand::kIndirectIndexed, ram->ReadByte(addr), true);
             length_ = 2;
             cycles_ = 5;
             break;
@@ -597,7 +597,7 @@ namespace ozones {
             mnemonic_ = kLdy;
             operand_ = Operand(Operand::kZeroPageIndexedX, ram->ReadByte(addr));
             length_ = 2;
-            cycles_ = 3;
+            cycles_ = 4;
             break;
         case 0xB5:
             mnemonic_ = kLda;
@@ -694,10 +694,10 @@ namespace ozones {
             cycles_ = 4;
             break;
         case 0xCE:
-            mnemonic_ = kCpy;
+            mnemonic_ = kDec;
             operand_ = Operand(Operand::kAbsolute, ram->ReadWord(addr));
             length_ = 3;
-            cycles_ = 3;
+            cycles_ = 6;
             break;
         case 0xD0:
             mnemonic_ = kBne;
@@ -706,7 +706,7 @@ namespace ozones {
             break;
         case 0xD1:
             mnemonic_ = kCmp;
-            operand_ = Operand(Operand::kIndirectIndexed, true, ram->ReadByte(addr));
+            operand_ = Operand(Operand::kIndirectIndexed, ram->ReadByte(addr), true);
             length_ = 2;
             cycles_ = 5;
             break;
@@ -808,7 +808,7 @@ namespace ozones {
             break;
         case 0xF1:
             mnemonic_ = kSbc;
-            operand_ = Operand(Operand::kIndirectIndexed, true, ram->ReadByte(addr));
+            operand_ = Operand(Operand::kIndirectIndexed, ram->ReadByte(addr), true);
             length_ = 2;
             cycles_ = 5;
             break;
@@ -828,7 +828,7 @@ namespace ozones {
             mnemonic_ = kSed;
             break;
         case 0xF9:
-            mnemonic_ = kCmp;
+            mnemonic_ = kSbc;
             operand_ = Operand(Operand::kAbsoluteIndexedY, ram->ReadWord(addr), true);
             length_ = 3;
             cycles_ = 4;
