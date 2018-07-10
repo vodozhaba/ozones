@@ -23,6 +23,7 @@ namespace ozones {
     Instruction::Instruction(std::shared_ptr<Ram> ram, uint16_t addr) : cycles_(2), length_(1) {
         uint8_t opcode = ram->ReadByte(addr++);
         switch(opcode) {
+        // Official opcodes
         case 0x00:
             mnemonic_ = kBrk;
             cycles_ = 7;
@@ -116,7 +117,7 @@ namespace ozones {
             break;
         case 0x20:
             mnemonic_ = kJsr;
-            operand_ = Operand(Operand::kAbsolute, addr);
+            operand_ = Operand(Operand::kImmediate, ram->ReadWord(addr));
             length_ = 3;
             cycles_ = 6;
             break;
@@ -256,7 +257,7 @@ namespace ozones {
             break;
         case 0x4C:
             mnemonic_ = kJmp;
-            operand_ = Operand(Operand::kAbsolute, addr);
+            operand_ = Operand(Operand::kImmediate, ram->ReadWord(addr));
             length_ = 3;
             cycles_ = 3;
             break;
@@ -351,12 +352,22 @@ namespace ozones {
             mnemonic_ = kRor;
             operand_ = Operand(Operand::kAccumulator);
             break;
-        case 0x6C:
+        case 0x6C: {
             mnemonic_ = kJmp;
-            operand_ = Operand(Operand::kAbsolute, ram->ReadWord(addr));
+            uint16_t op_addr = ram->ReadWord(addr);
+            uint16_t result;
+            // emulate the indirect JMP hardware bug
+            if((op_addr & 0xFF) == 0xFF) {
+                result = ram->ReadByte(op_addr) & 0xFF;
+                result |= ram->ReadByte(op_addr & 0xFF00) << 8;
+            } else {
+                result = ram->ReadWord(op_addr);
+            }
+            operand_ = Operand(Operand::kImmediate, result);
             length_ = 3;
             cycles_ = 5;
             break;
+        }
         case 0x6D:
             mnemonic_ = kAdc;
             operand_ = Operand(Operand::kAbsolute, ram->ReadWord(addr));
@@ -834,9 +845,17 @@ namespace ozones {
             length_ = 3;
             cycles_ = 7;
             break;
+        // Unofficial opcodes
+        case 0x04:
+        case 0x44:
+        case 0x64:
+            mnemonic_ = kNop;
+            length_ = 2;
+            cycles_ = 3;
+            break;
         default:
             std::stringstream ss;
-            ss << "Unknown opcode: 0x" << std::hex << opcode;
+            ss << std::hex << "Unknown opcode: 0x" << (int) opcode;
             throw std::runtime_error(ss.str());
         }
     }

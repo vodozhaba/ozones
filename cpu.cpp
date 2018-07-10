@@ -2,14 +2,21 @@
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include "cpu.h"
+#include <iostream>
 #include <sstream>
 
 namespace ozones {
 
-    Cpu::Cpu(std::shared_ptr<Ram> ram) : reg_a_(0), reg_x_(0), reg_y_(0), reg_sp_(0xFD), reg_p_(0x34), reg_pc_(ram->ReadWord(0xFFFC)), cycle_counter_(0), ram_(ram), nmi_pending_(false) { }
+    Cpu::Cpu(std::shared_ptr<Ram> ram) : reg_a_(0), reg_x_(0), reg_y_(0), reg_sp_(0xFD), reg_p_(0x24), reg_pc_(0xC000), cycle_counter_(0), ram_(ram), nmi_pending_(false) { }
 
     void Cpu::Tick() {
         Instruction instr(ram_, reg_pc_);
+        std::cout << std::hex << reg_pc_;
+        for(size_t i = 0; i < instr.GetLength(); i++) {
+            std::cout << std::hex << " " << (int) ram_->ReadByte(reg_pc_ + i);
+        }
+        std::cout << std::hex << " A:" << (int) reg_a_ << " X:" << (int) reg_x_ << " Y:" << (int) reg_y_ << " P:" << (int) reg_p_ << " SP:" << (int) reg_sp_;
+        std::cout << std::dec << " CYC: " << cycle_counter_ << std::endl;
         TakeCycles(instr.GetCycles());
         reg_pc_ += instr.GetLength();
         ExecuteInstruction(instr);
@@ -60,7 +67,7 @@ namespace ozones {
             break;
         }
         case Instruction::kPlp:
-            reg_p_ = PullWord();
+            reg_p_ = PullByte();
             SetFlag(kAlwaysSet, true);
             SetFlag(kBrkOrPhp, false);
             break;
@@ -146,9 +153,9 @@ namespace ozones {
             break;
         case Instruction::kCpy: {
             uint8_t operand = OperandRead(instruction.GetOperand());
-            SetFlag(kNegative, reg_y_ < operand);
             SetFlag(kZero, reg_y_ == operand);
-            SetFlag(kCarry, reg_y_  > operand);
+            SetFlag(kCarry, reg_y_ >= operand);
+            SetFlag(kNegative, (reg_y_ - operand) & 0x80);
             break;
         }
         case Instruction::kIny:
@@ -161,13 +168,13 @@ namespace ozones {
             }
             break;
         case Instruction::kCld:
-            SetFlag(kDecimalMode, true);
+            SetFlag(kDecimalMode, false);
             break;
         case Instruction::kCpx: {
             uint8_t operand = OperandRead(instruction.GetOperand());
-            SetFlag(kNegative, reg_x_ < operand);
             SetFlag(kZero, reg_x_ == operand);
-            SetFlag(kCarry, reg_x_  > operand);
+            SetFlag(kCarry, reg_x_ >= operand);
+            SetFlag(kNegative, (reg_x_ - operand) & 0x80);
             break;
         }
         case Instruction::kInx:
@@ -181,7 +188,7 @@ namespace ozones {
             break;
         case Instruction::kSed:
             SetFlag(kDecimalMode, true);
-            throw new std::runtime_error("Decimal mode is currently not supported");
+            break;
         case Instruction::kOra:
             reg_a_ |= OperandRead(instruction.GetOperand());
             UpdateStatus(reg_a_);
@@ -204,12 +211,13 @@ namespace ozones {
             break;
         case Instruction::kLda:
             reg_a_ = OperandRead(instruction.GetOperand());
+            UpdateStatus(reg_a_);
             break;
         case Instruction::kCmp: {
             uint8_t operand = OperandRead(instruction.GetOperand());
-            SetFlag(kNegative, reg_a_ < operand);
             SetFlag(kZero, reg_a_ == operand);
-            SetFlag(kCarry, reg_a_ > operand);
+            SetFlag(kCarry, reg_a_ >= operand);
+            SetFlag(kNegative, (reg_a_ - operand) & 0x80);
             break;
         }
         case Instruction::kSbc: {
@@ -322,13 +330,16 @@ namespace ozones {
         case Operand::kZeroPageIndexedY:
             return ram_->ReadByte((operand.GetValue() + reg_y_) & 0xFF);
         // Spot the difference
-        case Operand::kIndexedIndirect:
-            return ram_->ReadByte(ram_->ReadWord(operand.GetValue() + reg_x_));
+        case Operand::kIndexedIndirect: {
+            uint16_t lsb = ram_->ReadByte((operand.GetValue() + reg_x_) & 0xFF);
+            uint16_t msb = ram_->ReadByte((operand.GetValue() + reg_x_ + 1) & 0xFF);
+            return ram_->ReadByte(lsb | (msb << 8));
+        }
         case Operand::kIndirectIndexed:
             return ram_->ReadByte(ram_->ReadWord(operand.GetValue()) + reg_y_);
         case Operand::kRelative: {
             uint16_t new_reg_pc = reg_pc_ + (int8_t) operand.GetValue();
-            if(new_reg_pc & 0xFF00 != reg_pc_ & 0xFF00) {
+            if((new_reg_pc & 0xFF00) != reg_pc_ & 0xFF00 && operand.HasPageBoundaryPenalty()) {
                 TakeCycles(1);
             }
             return new_reg_pc;
@@ -370,9 +381,12 @@ namespace ozones {
             ram_->WriteByte((operand.GetValue() + reg_y_) & 0xFF, value);
             break;
         // Spot the difference
-        case Operand::kIndexedIndirect:
-            ram_->WriteByte(ram_->ReadWord(operand.GetValue() + reg_x_), value);
+        case Operand::kIndexedIndirect: {
+            uint16_t lsb = ram_->ReadByte((operand.GetValue() + reg_x_) & 0xFF);
+            uint16_t msb = ram_->ReadByte((operand.GetValue() + reg_x_ + 1) & 0xFF);
+            ram_->WriteByte(lsb | (msb << 8), value);
             break;
+        }
         case Operand::kIndirectIndexed:
             ram_->WriteByte(ram_->ReadWord(operand.GetValue()) + reg_y_, value);
             break;
@@ -406,31 +420,32 @@ namespace ozones {
         if(reg_p_ & kCarry)
             ++reg_a_;
         UpdateStatus(reg_a_);
-        SetFlag(kCarry, old_a < reg_a_);
+        SetFlag(kCarry, old_a > reg_a_);
         // If the operands have the same sign and the result has a different one
         SetFlag(kOverflow, ((old_a & 0x80) == (operand & 0x80)) && ((old_a & 0x80) != (reg_a_ & 0x80)));
     }
 
     void Cpu::PushByte(uint8_t value) {
-        ram_->WriteByte(reg_sp_--, value);
+        ram_->WriteByte(0x100 + reg_sp_--, value);
     }
 
     void Cpu::PushWord(uint16_t value) {
         --reg_sp_;
-        ram_->WriteWord(reg_sp_--, value);
+        ram_->WriteWord(0x100 + reg_sp_--, value);
     }
 
     uint8_t Cpu::PullByte() {
-        return ram_->ReadByte(++reg_sp_);
+        return ram_->ReadByte(0x100 + ++reg_sp_);
     }
 
     uint16_t Cpu::PullWord() {
         ++reg_sp_;
-        return ram_->ReadWord(reg_sp_++);
+        return ram_->ReadWord(0x100 + reg_sp_++);
     }
 
     void Cpu::TakeCycles(int n) {
-        cycle_counter_ += n;
+        cycle_counter_ += 3 * n;
+        cycle_counter_ %= 341;
     }
 
     void Cpu::TriggerNmi() {
