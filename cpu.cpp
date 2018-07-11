@@ -325,6 +325,15 @@ namespace ozones {
             UpdateStatus(reg_a_);
             break;
         }
+        case Instruction::kSre: {
+            uint8_t operand = OperandRead(instruction.GetOperand());
+            SetFlag(kCarry, operand & 0x01);
+            operand >>= 1;
+            OperandWrite(instruction.GetOperand(), operand);
+            reg_a_ ^= operand;
+            UpdateStatus(reg_a_);
+            break;
+        }
         case Instruction::kRra: {
             uint8_t operand = OperandRead(instruction.GetOperand());
             uint8_t old_carry = (reg_p_ & kCarry) ? 0x80 : 0;
@@ -354,8 +363,7 @@ namespace ozones {
         }
         case Instruction::kIsc: {
             uint8_t operand = OperandRead(instruction.GetOperand());
-            UpdateStatus(++operand);
-            OperandWrite(instruction.GetOperand(), operand);
+            OperandWrite(instruction.GetOperand(), ++operand);
             Adc(~operand);
             break;
         }
@@ -486,14 +494,15 @@ namespace ozones {
     }
 
     void Cpu::Adc(uint8_t operand) {
-        uint8_t old_a = reg_a_;
-        reg_a_ += operand;
+        uint16_t a = reg_a_;
+        a += operand;
         if(reg_p_ & kCarry)
-            ++reg_a_;
-        UpdateStatus(reg_a_);
-        SetFlag(kCarry, old_a > reg_a_);
+            ++a;
+        SetFlag(kCarry, a & 0x100);
         // If the operands have the same sign and the result has a different one
-        SetFlag(kOverflow, ((old_a & 0x80) == (operand & 0x80)) && ((old_a & 0x80) != (reg_a_ & 0x80)));
+        SetFlag(kOverflow, ((reg_a_ & 0x80) == (operand & 0x80)) && ((reg_a_ & 0x80) != (a & 0x80)));
+        reg_a_ = a;
+        UpdateStatus(reg_a_);
     }
 
     void Cpu::PushByte(uint8_t value) {
