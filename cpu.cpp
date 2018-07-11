@@ -313,6 +313,14 @@ namespace ozones {
             reg_x_ = reg_a_;
             UpdateStatus(reg_x_);
             break;
+        case Instruction::kDcp: {
+            uint8_t operand = OperandRead(instruction.GetOperand());
+            OperandWrite(instruction.GetOperand(), --operand);
+            SetFlag(kZero, reg_a_ == operand);
+            SetFlag(kCarry, reg_a_ >= operand);
+            SetFlag(kNegative, (reg_a_ - operand) & 0x80);
+            break;
+        }
         default:
             std::stringstream ss;
             ss << "Unknown instruction: " << instruction.GetMnemonic();
@@ -358,7 +366,7 @@ namespace ozones {
         }
         case Operand::kRelative: {
             uint16_t new_reg_pc = reg_pc_ + (int8_t) operand.GetValue();
-            if((new_reg_pc & 0xFF00) != reg_pc_ & 0xFF00 && operand.HasPageBoundaryPenalty()) {
+            if((new_reg_pc & 0xFF00) != (reg_pc_ & 0xFF00) && operand.HasPageBoundaryPenalty()) {
                 TakeCycles(1);
             }
             return new_reg_pc;

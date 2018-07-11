@@ -957,6 +957,53 @@ namespace ozones {
             cycles_ = 4;
             operand_ = Operand(Operand::kAbsoluteIndexedY, ram->ReadWord(addr), true);
             break;
+        case 0xEB:
+            mnemonic_ = kSbc;
+            length_ = 2;
+            operand_ = Operand(Operand::kImmediate, ram->ReadByte(addr));
+            break;
+        case 0xC3:
+            mnemonic_ = kDcp;
+            length_ = 2;
+            cycles_ = 8;
+            operand_ = Operand(Operand::kIndexedIndirect, ram->ReadByte(addr));
+            break;
+        case 0xC7:
+            mnemonic_ = kDcp;
+            length_ = 2;
+            cycles_ = 5;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadByte(addr));
+            break;
+        case 0xCF:
+            mnemonic_ = kDcp;
+            length_ = 3;
+            cycles_ = 6;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadWord(addr));
+            break;
+        case 0xD3:
+            mnemonic_ = kDcp;
+            length_ = 2;
+            cycles_ = 8;
+            operand_ = Operand(Operand::kIndirectIndexed, ram->ReadByte(addr));
+            break;
+        case 0xD7:
+            mnemonic_ = kDcp;
+            length_ = 2;
+            cycles_ = 6;
+            operand_ = Operand(Operand::kZeroPageIndexedX, ram->ReadByte(addr));
+            break;
+        case 0xDB:
+            mnemonic_ = kDcp;
+            length_ = 3;
+            cycles_ = 7;
+            operand_ = Operand(Operand::kAbsoluteIndexedY, ram->ReadWord(addr));
+            break;
+        case 0xDF:
+            mnemonic_ = kDcp;
+            length_ = 3;
+            cycles_ = 7;
+            operand_ = Operand(Operand::kAbsoluteIndexedX, ram->ReadWord(addr));
+            break;
         default:
             std::stringstream ss;
             ss << std::hex << "Unknown opcode: 0x" << (int) opcode;
