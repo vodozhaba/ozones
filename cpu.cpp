@@ -2,6 +2,7 @@
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include "cpu.h"
+#include "unistd.h"
 #include <iostream>
 #include <sstream>
 
@@ -36,6 +37,7 @@ namespace ozones {
 
     void Cpu::ExecuteInstruction(Instruction instruction) {
         switch(instruction.GetMnemonic()) {
+        // Official
         case Instruction::kNop:
             if(instruction.GetOperand().GetMode() != Operand::kImplied)
                 OperandRead(instruction.GetOperand());
@@ -302,6 +304,12 @@ namespace ozones {
                 break;
             }
         }
+        // Unofficial
+        case Instruction::kLax:
+            reg_a_ = OperandRead(instruction.GetOperand());
+            reg_x_ = reg_a_;
+            UpdateStatus(reg_x_);
+            break;
         default:
             std::stringstream ss;
             ss << "Unknown instruction: " << instruction.GetMnemonic();
@@ -321,12 +329,12 @@ namespace ozones {
             if((operand.GetValue() & 0xFF) + reg_x_ > 0xFF && operand.HasPageBoundaryPenalty()) {
                 TakeCycles(1);
             }
-            return ram_->ReadByte(operand.GetValue() + reg_x_);
+            return ram_->ReadByte((operand.GetValue() + reg_x_) & 0xFFFF);
         case Operand::kAbsoluteIndexedY:
             if((operand.GetValue() & 0xFF) + reg_y_ > 0xFF && operand.HasPageBoundaryPenalty()) {
                 TakeCycles(1);
             }
-            return ram_->ReadByte(operand.GetValue() + reg_y_);
+            return ram_->ReadByte((operand.GetValue() + reg_y_) & 0xFFFF);
         case Operand::kZeroPageIndexedX:
             return ram_->ReadByte((operand.GetValue() + reg_x_) & 0xFF);
         case Operand::kZeroPageIndexedY:
@@ -374,13 +382,13 @@ namespace ozones {
             if((operand.GetValue() & 0xFF) + reg_x_ > 0xFF && operand.HasPageBoundaryPenalty()) {
                 TakeCycles(1);
             }
-            ram_->WriteByte(operand.GetValue() + reg_x_, value);
+            ram_->WriteByte((operand.GetValue() + reg_x_) & 0xFFFF, value);
             break;
         case Operand::kAbsoluteIndexedY:
             if((operand.GetValue() & 0xFF) + reg_y_ > 0xFF && operand.HasPageBoundaryPenalty()) {
                 TakeCycles(1);
             }
-            ram_->WriteByte(operand.GetValue() + reg_y_, value);
+            ram_->WriteByte((operand.GetValue() + reg_y_) & 0xFFFF, value);
             break;
         case Operand::kZeroPageIndexedX:
             ram_->WriteByte((operand.GetValue() + reg_x_) & 0xFF, value);

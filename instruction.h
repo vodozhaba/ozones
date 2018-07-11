@@ -37,6 +37,7 @@ namespace ozones {
     class Instruction {
     public:
         enum Mnemonic {
+            // Official
             kNop,
             kBrk,
             kPhp,
@@ -92,7 +93,9 @@ namespace ozones {
             kTsx,
             kDec,
             kDex,
-            kInc
+            kInc,
+            // Unofficial
+            kLax
         };
         Instruction(std::shared_ptr<Ram> ram, uint16_t addr);
         int GetCycles();

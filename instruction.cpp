@@ -897,6 +897,42 @@ namespace ozones {
             // SERIOUSLY?!
             operand_ = Operand(Operand::kAbsoluteIndexedX, ram->ReadWord(addr), true);
             break;
+        case 0xA3:
+            mnemonic_ = kLax;
+            length_ = 2;
+            cycles_ = 6;
+            operand_ = Operand(Operand::kIndexedIndirect, ram->ReadByte(addr));
+            break;
+        case 0xA7:
+            mnemonic_ = kLax;
+            length_ = 2;
+            cycles_ = 3;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadByte(addr));
+            break;
+        case 0xAF:
+            mnemonic_ = kLax;
+            length_ = 3;
+            cycles_ = 4;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadWord(addr));
+            break;
+        case 0xB3:
+            mnemonic_ = kLax;
+            length_ = 2;
+            cycles_ = 5;
+            operand_ = Operand(Operand::kIndirectIndexed, ram->ReadByte(addr), true);
+            break;
+        case 0xB7:
+            mnemonic_ = kLax;
+            length_ = 2;
+            cycles_ = 4;
+            operand_ = Operand(Operand::kZeroPageIndexedY, ram->ReadByte(addr));
+            break;
+        case 0xBF:
+            mnemonic_ = kLax;
+            length_ = 3;
+            cycles_ = 4;
+            operand_ = Operand(Operand::kAbsoluteIndexedY, ram->ReadWord(addr), true);
+            break;
         default:
             std::stringstream ss;
             ss << std::hex << "Unknown opcode: 0x" << (int) opcode;
