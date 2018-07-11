@@ -897,6 +897,30 @@ namespace ozones {
             // SERIOUSLY?!
             operand_ = Operand(Operand::kAbsoluteIndexedX, ram->ReadWord(addr), true);
             break;
+        case 0x83:
+            mnemonic_ = kSax;
+            length_ = 2;
+            cycles_ = 6;
+            operand_ = Operand(Operand::kIndexedIndirect, ram->ReadByte(addr));
+            break;
+        case 0x87:
+            mnemonic_ = kSax;
+            length_ = 2;
+            cycles_ = 3;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadByte(addr));
+            break;
+        case 0x8F:
+            mnemonic_ = kSax;
+            length_ = 3;
+            cycles_ = 4;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadWord(addr));
+            break;
+        case 0x97:
+            mnemonic_ = kSax;
+            length_ = 2;
+            cycles_ = 4;
+            operand_ = Operand(Operand::kZeroPageIndexedY, ram->ReadByte(addr));
+            break;
         case 0xA3:
             mnemonic_ = kLax;
             length_ = 2;

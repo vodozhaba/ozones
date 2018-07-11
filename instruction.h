@@ -95,6 +95,7 @@ namespace ozones {
             kDex,
             kInc,
             // Unofficial
+            kSax,
             kLax
         };
         Instruction(std::shared_ptr<Ram> ram, uint16_t addr);

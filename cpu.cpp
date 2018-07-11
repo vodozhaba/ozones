@@ -305,6 +305,9 @@ namespace ozones {
             }
         }
         // Unofficial
+        case Instruction::kSax:
+            OperandWrite(instruction.GetOperand(), reg_a_ & reg_x_);
+            break;
         case Instruction::kLax:
             reg_a_ = OperandRead(instruction.GetOperand());
             reg_x_ = reg_a_;
