@@ -95,6 +95,7 @@ namespace ozones {
             kDex,
             kInc,
             // Unofficial
+            kSlo,
             kSax,
             kLax,
             kDcp,

@@ -846,19 +846,43 @@ namespace ozones {
             cycles_ = 7;
             break;
         // Unofficial opcodes
+        case 0x03:
+            mnemonic_ = kSlo;
+            length_ = 2;
+            cycles_ = 8;
+            operand_ = Operand(Operand::kIndexedIndirect, ram->ReadByte(addr));
+            break;
         case 0x04:
         case 0x44:
         case 0x64:
             mnemonic_ = kNop;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadByte(addr));
             length_ = 2;
             cycles_ = 3;
+            break;
+        case 0x07:
+            mnemonic_ = kSlo;
+            length_ = 2;
+            cycles_ = 5;
             operand_ = Operand(Operand::kAbsolute, ram->ReadByte(addr));
             break;
         case 0x0C:
             mnemonic_ = kNop;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadWord(addr));
             length_ = 3;
             cycles_ = 4;
+            break;
+        case 0x0F:
+            mnemonic_ = kSlo;
+            length_ = 3;
+            cycles_ = 6;
             operand_ = Operand(Operand::kAbsolute, ram->ReadWord(addr));
+            break;
+        case 0x13:
+            mnemonic_ = kSlo;
+            length_ = 2;
+            cycles_ = 8;
+            operand_ = Operand(Operand::kIndirectIndexed, ram->ReadByte(addr));
             break;
         case 0x14:
         case 0x34:
@@ -867,9 +891,15 @@ namespace ozones {
         case 0xD4:
         case 0xF4:
             mnemonic_ = kNop;
+            // NOP with zero page indexed addressing. What am I doing...
+            operand_ = Operand(Operand::kZeroPageIndexedX, ram->ReadByte(addr));
             length_ = 2;
             cycles_ = 4;
-            // NOP with zero page indexed addressing. What am I doing...
+            break;
+        case 0x17:
+            mnemonic_ = kSlo;
+            length_ = 2;
+            cycles_ = 6;
             operand_ = Operand(Operand::kZeroPageIndexedX, ram->ReadByte(addr));
             break;
         case 0x1A:
@@ -880,10 +910,16 @@ namespace ozones {
         case 0xFA:
             mnemonic_ = kNop;
             break;
+        case 0x1B:
+            mnemonic_ = kSlo;
+            length_ = 3;
+            cycles_ = 7;
+            operand_ = Operand(Operand::kAbsoluteIndexedY, ram->ReadWord(addr));
+            break;
         case 0x80:
             mnemonic_ = kNop;
-            length_ = 2;
             operand_ = Operand(Operand::kImmediate, ram->ReadByte(addr));
+            length_ = 2;
             break;
         case 0x1C:
         case 0x3C:
@@ -892,159 +928,165 @@ namespace ozones {
         case 0xDC:
         case 0xFC:
             mnemonic_ = kNop;
-            length_ = 3;
-            cycles_ = 4;
             // SERIOUSLY?!
             operand_ = Operand(Operand::kAbsoluteIndexedX, ram->ReadWord(addr), true);
+            length_ = 3;
+            cycles_ = 4;
+            break;
+        case 0x1F:
+            mnemonic_ = kSlo;
+            length_ = 3;
+            cycles_ = 7;
+            operand_ = Operand(Operand::kAbsoluteIndexedX, ram->ReadWord(addr));
             break;
         case 0x83:
             mnemonic_ = kSax;
+            operand_ = Operand(Operand::kIndexedIndirect, ram->ReadByte(addr));
             length_ = 2;
             cycles_ = 6;
-            operand_ = Operand(Operand::kIndexedIndirect, ram->ReadByte(addr));
             break;
         case 0x87:
             mnemonic_ = kSax;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadByte(addr));
             length_ = 2;
             cycles_ = 3;
-            operand_ = Operand(Operand::kAbsolute, ram->ReadByte(addr));
             break;
         case 0x8F:
             mnemonic_ = kSax;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadWord(addr));
             length_ = 3;
             cycles_ = 4;
-            operand_ = Operand(Operand::kAbsolute, ram->ReadWord(addr));
             break;
         case 0x97:
             mnemonic_ = kSax;
+            operand_ = Operand(Operand::kZeroPageIndexedY, ram->ReadByte(addr));
             length_ = 2;
             cycles_ = 4;
-            operand_ = Operand(Operand::kZeroPageIndexedY, ram->ReadByte(addr));
             break;
         case 0xA3:
             mnemonic_ = kLax;
+            operand_ = Operand(Operand::kIndexedIndirect, ram->ReadByte(addr));
             length_ = 2;
             cycles_ = 6;
-            operand_ = Operand(Operand::kIndexedIndirect, ram->ReadByte(addr));
             break;
         case 0xA7:
             mnemonic_ = kLax;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadByte(addr));
             length_ = 2;
             cycles_ = 3;
-            operand_ = Operand(Operand::kAbsolute, ram->ReadByte(addr));
             break;
         case 0xAF:
             mnemonic_ = kLax;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadWord(addr));
             length_ = 3;
             cycles_ = 4;
-            operand_ = Operand(Operand::kAbsolute, ram->ReadWord(addr));
             break;
         case 0xB3:
             mnemonic_ = kLax;
+            operand_ = Operand(Operand::kIndirectIndexed, ram->ReadByte(addr), true);
             length_ = 2;
             cycles_ = 5;
-            operand_ = Operand(Operand::kIndirectIndexed, ram->ReadByte(addr), true);
             break;
         case 0xB7:
             mnemonic_ = kLax;
+            operand_ = Operand(Operand::kZeroPageIndexedY, ram->ReadByte(addr));
             length_ = 2;
             cycles_ = 4;
-            operand_ = Operand(Operand::kZeroPageIndexedY, ram->ReadByte(addr));
             break;
         case 0xBF:
             mnemonic_ = kLax;
+            operand_ = Operand(Operand::kAbsoluteIndexedY, ram->ReadWord(addr), true);
             length_ = 3;
             cycles_ = 4;
-            operand_ = Operand(Operand::kAbsoluteIndexedY, ram->ReadWord(addr), true);
             break;
         case 0xEB:
             mnemonic_ = kSbc;
-            length_ = 2;
             operand_ = Operand(Operand::kImmediate, ram->ReadByte(addr));
+            length_ = 2;
             break;
         case 0xC3:
             mnemonic_ = kDcp;
+            operand_ = Operand(Operand::kIndexedIndirect, ram->ReadByte(addr));
             length_ = 2;
             cycles_ = 8;
-            operand_ = Operand(Operand::kIndexedIndirect, ram->ReadByte(addr));
             break;
         case 0xC7:
             mnemonic_ = kDcp;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadByte(addr));
             length_ = 2;
             cycles_ = 5;
-            operand_ = Operand(Operand::kAbsolute, ram->ReadByte(addr));
             break;
         case 0xCF:
             mnemonic_ = kDcp;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadWord(addr));
             length_ = 3;
             cycles_ = 6;
-            operand_ = Operand(Operand::kAbsolute, ram->ReadWord(addr));
             break;
         case 0xD3:
             mnemonic_ = kDcp;
+            operand_ = Operand(Operand::kIndirectIndexed, ram->ReadByte(addr));
             length_ = 2;
             cycles_ = 8;
-            operand_ = Operand(Operand::kIndirectIndexed, ram->ReadByte(addr));
             break;
         case 0xD7:
             mnemonic_ = kDcp;
+            operand_ = Operand(Operand::kZeroPageIndexedX, ram->ReadByte(addr));
             length_ = 2;
             cycles_ = 6;
-            operand_ = Operand(Operand::kZeroPageIndexedX, ram->ReadByte(addr));
             break;
         case 0xDB:
             mnemonic_ = kDcp;
+            operand_ = Operand(Operand::kAbsoluteIndexedY, ram->ReadWord(addr));
             length_ = 3;
             cycles_ = 7;
-            operand_ = Operand(Operand::kAbsoluteIndexedY, ram->ReadWord(addr));
             break;
         case 0xDF:
             mnemonic_ = kDcp;
+            operand_ = Operand(Operand::kAbsoluteIndexedX, ram->ReadWord(addr));
             length_ = 3;
             cycles_ = 7;
-            operand_ = Operand(Operand::kAbsoluteIndexedX, ram->ReadWord(addr));
             break;
         case 0xE3:
             mnemonic_ = kIsc;
+            operand_ = Operand(Operand::kIndexedIndirect, ram->ReadByte(addr));
             length_ = 2;
             cycles_ = 8;
-            operand_ = Operand(Operand::kIndexedIndirect, ram->ReadByte(addr));
             break;
         case 0xE7:
             mnemonic_ = kIsc;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadByte(addr));
             length_ = 2;
             cycles_ = 5;
-            operand_ = Operand(Operand::kAbsolute, ram->ReadByte(addr));
             break;
         case 0xEF:
             mnemonic_ = kIsc;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadWord(addr));
             length_ = 3;
             cycles_ = 6;
-            operand_ = Operand(Operand::kAbsolute, ram->ReadWord(addr));
             break;
         case 0xF3:
             mnemonic_ = kIsc;
+            operand_ = Operand(Operand::kIndirectIndexed, ram->ReadByte(addr));
             length_ = 2;
             cycles_ = 8;
-            operand_ = Operand(Operand::kIndirectIndexed, ram->ReadByte(addr));
             break;
         case 0xF7:
             mnemonic_ = kIsc;
+            operand_ = Operand(Operand::kZeroPageIndexedX, ram->ReadByte(addr));
             length_ = 2;
             cycles_ = 6;
-            operand_ = Operand(Operand::kZeroPageIndexedX, ram->ReadByte(addr));
             break;
         case 0xFB:
             mnemonic_ = kIsc;
+            operand_ = Operand(Operand::kAbsoluteIndexedY, ram->ReadWord(addr));
             length_ = 3;
             cycles_ = 7;
-            operand_ = Operand(Operand::kAbsoluteIndexedY, ram->ReadWord(addr));
             break;
         case 0xFF:
             mnemonic_ = kIsc;
+            operand_ = Operand(Operand::kAbsoluteIndexedX, ram->ReadWord(addr));
             length_ = 3;
             cycles_ = 7;
-            operand_ = Operand(Operand::kAbsoluteIndexedX, ram->ReadWord(addr));
             break;
         default:
             std::stringstream ss;

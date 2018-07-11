@@ -305,6 +305,15 @@ namespace ozones {
             break;
         }
         // Unofficial
+        case Instruction::kSlo: {
+            uint8_t operand = OperandRead(instruction.GetOperand());
+            SetFlag(kCarry, operand & 0x80);
+            operand <<= 1;
+            OperandWrite(instruction.GetOperand(), operand);
+            reg_a_ |= operand;
+            UpdateStatus(reg_a_);
+            break;
+        }
         case Instruction::kSax:
             OperandWrite(instruction.GetOperand(), reg_a_ & reg_x_);
             break;
