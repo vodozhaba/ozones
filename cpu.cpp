@@ -297,12 +297,12 @@ namespace ozones {
         case Instruction::kDex: {
             UpdateStatus(--reg_x_);
             break;
+        }
         case Instruction::kInc: {
-                uint8_t operand = OperandRead(instruction.GetOperand());
-                UpdateStatus(++operand);
-                OperandWrite(instruction.GetOperand(), operand);
-                break;
-            }
+            uint8_t operand = OperandRead(instruction.GetOperand());
+            UpdateStatus(++operand);
+            OperandWrite(instruction.GetOperand(), operand);
+            break;
         }
         // Unofficial
         case Instruction::kSax:
@@ -319,6 +319,13 @@ namespace ozones {
             SetFlag(kZero, reg_a_ == operand);
             SetFlag(kCarry, reg_a_ >= operand);
             SetFlag(kNegative, (reg_a_ - operand) & 0x80);
+            break;
+        }
+        case Instruction::kIsc: {
+            uint8_t operand = OperandRead(instruction.GetOperand());
+            UpdateStatus(++operand);
+            OperandWrite(instruction.GetOperand(), operand);
+            Adc(~operand);
             break;
         }
         default:

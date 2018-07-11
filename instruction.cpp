@@ -1004,6 +1004,48 @@ namespace ozones {
             cycles_ = 7;
             operand_ = Operand(Operand::kAbsoluteIndexedX, ram->ReadWord(addr));
             break;
+        case 0xE3:
+            mnemonic_ = kIsc;
+            length_ = 2;
+            cycles_ = 8;
+            operand_ = Operand(Operand::kIndexedIndirect, ram->ReadByte(addr));
+            break;
+        case 0xE7:
+            mnemonic_ = kIsc;
+            length_ = 2;
+            cycles_ = 5;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadByte(addr));
+            break;
+        case 0xEF:
+            mnemonic_ = kIsc;
+            length_ = 3;
+            cycles_ = 6;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadWord(addr));
+            break;
+        case 0xF3:
+            mnemonic_ = kIsc;
+            length_ = 2;
+            cycles_ = 8;
+            operand_ = Operand(Operand::kIndirectIndexed, ram->ReadByte(addr));
+            break;
+        case 0xF7:
+            mnemonic_ = kIsc;
+            length_ = 2;
+            cycles_ = 6;
+            operand_ = Operand(Operand::kZeroPageIndexedX, ram->ReadByte(addr));
+            break;
+        case 0xFB:
+            mnemonic_ = kIsc;
+            length_ = 3;
+            cycles_ = 7;
+            operand_ = Operand(Operand::kAbsoluteIndexedY, ram->ReadWord(addr));
+            break;
+        case 0xFF:
+            mnemonic_ = kIsc;
+            length_ = 3;
+            cycles_ = 7;
+            operand_ = Operand(Operand::kAbsoluteIndexedX, ram->ReadWord(addr));
+            break;
         default:
             std::stringstream ss;
             ss << std::hex << "Unknown opcode: 0x" << (int) opcode;

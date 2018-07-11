@@ -97,7 +97,8 @@ namespace ozones {
             // Unofficial
             kSax,
             kLax,
-            kDcp
+            kDcp,
+            kIsc
         };
         Instruction(std::shared_ptr<Ram> ram, uint16_t addr);
         int GetCycles();
