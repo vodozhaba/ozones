@@ -314,6 +314,28 @@ namespace ozones {
             UpdateStatus(reg_a_);
             break;
         }
+        case Instruction::kRla: {
+            uint8_t operand = OperandRead(instruction.GetOperand());
+            uint8_t old_carry = (reg_p_ & kCarry) ? 1 : 0;
+            SetFlag(kCarry, operand & 0x80);
+            operand <<= 1;
+            operand += old_carry;
+            OperandWrite(instruction.GetOperand(), operand);
+            reg_a_ &= operand;
+            UpdateStatus(reg_a_);
+            break;
+        }
+        case Instruction::kRra: {
+            uint8_t operand = OperandRead(instruction.GetOperand());
+            uint8_t old_carry = (reg_p_ & kCarry) ? 0x80 : 0;
+            SetFlag(kCarry, operand & 0x01);
+            operand >>= 1;
+            operand += old_carry;
+            OperandWrite(instruction.GetOperand(), operand);
+            Adc(operand);
+            break;
+
+        }
         case Instruction::kSax:
             OperandWrite(instruction.GetOperand(), reg_a_ & reg_x_);
             break;

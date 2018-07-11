@@ -939,6 +939,90 @@ namespace ozones {
             cycles_ = 7;
             operand_ = Operand(Operand::kAbsoluteIndexedX, ram->ReadWord(addr));
             break;
+        case 0x23:
+            mnemonic_ = kRla;
+            length_ = 2;
+            cycles_ = 8;
+            operand_ = Operand(Operand::kIndexedIndirect, ram->ReadByte(addr));
+            break;
+        case 0x27:
+            mnemonic_ = kRla;
+            length_ = 2;
+            cycles_ = 5;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadByte(addr));
+            break;
+        case 0x2F:
+            mnemonic_ = kRla;
+            length_ = 3;
+            cycles_ = 6;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadWord(addr));
+            break;
+        case 0x33:
+            mnemonic_ = kRla;
+            length_ = 2;
+            cycles_ = 8;
+            operand_ = Operand(Operand::kIndirectIndexed, ram->ReadByte(addr));
+            break;
+        case 0x37:
+            mnemonic_ = kRla;
+            length_ = 2;
+            cycles_ = 6;
+            operand_ = Operand(Operand::kZeroPageIndexedX, ram->ReadByte(addr));
+            break;
+        case 0x3B:
+            mnemonic_ = kRla;
+            length_ = 3;
+            cycles_ = 7;
+            operand_ = Operand(Operand::kAbsoluteIndexedY, ram->ReadWord(addr));
+            break;
+        case 0x3F:
+            mnemonic_ = kRla;
+            length_ = 3;
+            cycles_ = 7;
+            operand_ = Operand(Operand::kAbsoluteIndexedX, ram->ReadWord(addr));
+            break;
+        case 0x63:
+            mnemonic_ = kRra;
+            length_ = 2;
+            cycles_ = 8;
+            operand_ = Operand(Operand::kIndexedIndirect, ram->ReadByte(addr));
+            break;
+        case 0x67:
+            mnemonic_ = kRra;
+            length_ = 2;
+            cycles_ = 5;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadByte(addr));
+            break;
+        case 0x6F:
+            mnemonic_ = kRra;
+            length_ = 3;
+            cycles_ = 6;
+            operand_ = Operand(Operand::kAbsolute, ram->ReadWord(addr));
+            break;
+        case 0x73:
+            mnemonic_ = kRra;
+            length_ = 2;
+            cycles_ = 8;
+            operand_ = Operand(Operand::kIndirectIndexed, ram->ReadByte(addr));
+            break;
+        case 0x77:
+            mnemonic_ = kRra;
+            length_ = 2;
+            cycles_ = 6;
+            operand_ = Operand(Operand::kZeroPageIndexedX, ram->ReadByte(addr));
+            break;
+        case 0x7B:
+            mnemonic_ = kRra;
+            length_ = 3;
+            cycles_ = 7;
+            operand_ = Operand(Operand::kAbsoluteIndexedY, ram->ReadWord(addr));
+            break;
+        case 0x7F:
+            mnemonic_ = kRra;
+            length_ = 3;
+            cycles_ = 7;
+            operand_ = Operand(Operand::kAbsoluteIndexedX, ram->ReadWord(addr));
+            break;
         case 0x83:
             mnemonic_ = kSax;
             operand_ = Operand(Operand::kIndexedIndirect, ram->ReadByte(addr));
