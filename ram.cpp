@@ -5,11 +5,11 @@
 
 namespace ozones {
 
-uint16_t MappableInterface::ReadWord(size_t addr) {
+uint16_t Mappable::ReadWord(size_t addr) {
     return ReadByte(addr) | (uint16_t) ReadByte(addr + 1) << 8;
 }
 
-void MappableInterface::WriteWord(size_t addr, uint16_t value) {
+void Mappable::WriteWord(size_t addr, uint16_t value) {
     WriteByte(addr, value);
     WriteByte(addr + 1, value >> 8);
 }
@@ -38,10 +38,10 @@ void Ram::WriteByte(size_t addr, uint8_t value) {
     contents_[addr] = value;
 }
 
-void Ram::Map(std::shared_ptr<MappableInterface> destination, size_t source_start, size_t dest_start, size_t length) {
+void Ram::Map(std::shared_ptr<Mappable> destination, size_t source_start, size_t dest_start, size_t length) {
     mappings_.push_back(Mapping(destination, source_start, dest_start, length));
 }
 
-Ram::Mapping::Mapping(std::shared_ptr<MappableInterface> destination, size_t source_start, size_t dest_start, size_t length) : destination(destination), source_start(source_start), dest_start(dest_start), length(length) { }
+Ram::Mapping::Mapping(std::shared_ptr<Mappable> destination, size_t source_start, size_t dest_start, size_t length) : destination(destination), source_start(source_start), dest_start(dest_start), length(length) { }
 
 }

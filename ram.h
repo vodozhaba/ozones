@@ -6,7 +6,7 @@
 
 namespace ozones {
 
-class MappableInterface {
+class Mappable {
 public:
     virtual uint8_t ReadByte(size_t addr) = 0;
     virtual void WriteByte(size_t addr, uint8_t value) = 0;
@@ -14,16 +14,16 @@ public:
     void WriteWord(size_t addr, uint16_t value);
 };
 
-class Ram : public MappableInterface {
+class Ram : public Mappable {
 public:
     Ram(size_t size = 0);
     uint8_t ReadByte(size_t addr) override;
     void WriteByte(size_t addr, uint8_t value) override;
-    void Map(std::shared_ptr<MappableInterface> destination, size_t source_start, size_t dest_start, size_t length);
+    void Map(std::shared_ptr<Mappable> destination, size_t source_start, size_t dest_start, size_t length);
 private:
     struct Mapping {
-        Mapping(std::shared_ptr<MappableInterface>, size_t source_start, size_t dest_start, size_t length);
-        std::shared_ptr<MappableInterface> destination;
+        Mapping(std::shared_ptr<Mappable>, size_t source_start, size_t dest_start, size_t length);
+        std::shared_ptr<Mappable> destination;
         size_t source_start;
         size_t dest_start;
         size_t length;

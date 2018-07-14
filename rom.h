@@ -7,7 +7,7 @@
 
 namespace ozones {
 
-class Rom : public MappableInterface {
+class Rom : public Mappable {
 public:
     Rom(std::istream& stream, size_t size);
     uint8_t ReadByte(size_t addr) override;
