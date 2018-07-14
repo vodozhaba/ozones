@@ -8,7 +8,8 @@ SOURCES += \
     instruction.cpp \
     cpu.cpp \
     ozones.cpp \
-    rom.cpp
+    rom.cpp \
+    ppu.cpp
 
 SUBDIRS += \
     ozones.pro
@@ -21,7 +22,8 @@ HEADERS += \
     instruction.h \
     cpu.h \
     rom.h \
-    ines.h
+    ines.h \
+    ppu.h
 
 unix|win32: LIBS += -lsfml-window \
     -lsfml-graphics \
