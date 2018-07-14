@@ -8,7 +8,7 @@
 
 namespace ozones {
 
-Cpu::Cpu(std::shared_ptr<Ram> ram) : reg_a_(0), reg_x_(0), reg_y_(0), reg_sp_(0xFD), reg_p_(0x24), reg_pc_(0xC000), cycle_counter_(0), ram_(ram), nmi_pending_(false) { }
+Cpu::Cpu(std::shared_ptr<Ram> ram) : reg_a_(0), reg_x_(0), reg_y_(0), reg_sp_(0xFD), reg_p_(0x24), reg_pc_(ram->ReadWord(0xFFFC)), cycle_counter_(0), ram_(ram), nmi_pending_(false) { }
 
 void Cpu::Tick() {
     Instruction instr(ram_, reg_pc_);
@@ -18,9 +18,10 @@ void Cpu::Tick() {
     }
     std::cout << std::hex << " A:" << (int) reg_a_ << " X:" << (int) reg_x_ << " Y:" << (int) reg_y_ << " P:" << (int) reg_p_ << " SP:" << (int) reg_sp_;
     std::cout << std::dec << " CYC: " << cycle_counter_ << std::endl;
-    TakeCycles(instr.GetCycles());
+    TakeCycles(instr.GetCycles() - 1);
     reg_pc_ += instr.GetLength();
     ExecuteInstruction(instr);
+    TakeCycles(1);
     if(nmi_pending_)
         TriggerNmi();
     if(!(reg_p_ & kInterruptDisable) && irq_pending_)
